@@ -8,4 +8,8 @@ prisonerWalkRight1={width=1,spriteIDs={4}}
 prisonerWalkRight2={width=1,spriteIDs={5}}
 prisonerWalkStr1={width=1,spriteIDs={6}}
 prisonerWalkStr2={width=1,spriteIDs={7}}
+prisonerShivLeft1={width=1,spriteIDs={18}}
+prisonerShivLeft2={width=1,spriteIDs={19}}
+prisonerShivRight1={width=1,spriteIDs={20}}
+prisonerShivRight2={width=1,spriteIDs={21}}
 -- spritelib-end

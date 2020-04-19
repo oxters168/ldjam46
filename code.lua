@@ -9,6 +9,7 @@ local prisoner = nil
 ]]--
 function Init()
   SpawnPrisoner(128, 128)
+  SpawnPrisoner(32, 32, true)
 end
 
 --[[

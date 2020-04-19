@@ -54,9 +54,17 @@ local prisonerAnimStates = {
         prisonerWalkStr1,
         prisonerWalkStr2,
     },
+    shivLeft = {
+        prisonerShivLeft1,
+        prisonerShivLeft2,
+    },
+    shivRight = {
+        prisonerShivRight1,
+        prisonerShivRight2,
+    },
 }
 
-function SpawnPrisoner(x, y)
+function SpawnPrisoner(x, y, takesInput)
     
     local prisonerData = {
         uid = tostring(os.time()),
@@ -67,11 +75,16 @@ function SpawnPrisoner(x, y)
         timePassedSinceLastFrame = 0,
         remove = false,
         currentDirection = WorldAxis2DNone(),
+        isShivvingLeft = false,
+        isShivvingRight = false,
         currentSpeed = 0,
-        maxSpeed = 0.2,
-        input = { x = 0, y = 0, },
+        maxSpeed = 0.33,
+        inputDirection = WorldAxis2DNone(),
+        inputA = false,
+        inputB = false,
         lastRandomInputSet = 0,
         randomInputTime = 2,
+        controlledByPlayer = takesInput or false,
     }
     table.insert(activePrisoners, prisonerData)
 
@@ -102,15 +115,23 @@ function GetInputVector()
 
 end
 
-function MovePrisoner(prisoner, timeDelta)
+function GetPrisonerInput(prisoner, timeDelta)
 
-    --currentPrisoner.input = GetInputVector()
-    prisoner.lastRandomInputSet = prisoner.lastRandomInputSet + timeDelta / 1000
-    if (prisoner.lastRandomInputSet >= prisoner.randomInputTime) then
-        prisoner.lastRandomInputSet = 0
-        prisoner.input = GetRandomInput()
+    if (prisoner.controlledByPlayer == true) then
+        prisoner.inputDirection = GetInputVector()
+        prisoner.inputA = Button(Buttons.A, InputState.Down)
+        prisoner.inputB = Button(Buttons.B, InputState.Down)
+    else
+        prisoner.lastRandomInputSet = prisoner.lastRandomInputSet + timeDelta / 1000
+        if (prisoner.lastRandomInputSet >= prisoner.randomInputTime) then
+            prisoner.lastRandomInputSet = 0
+            prisoner.inputDirection = GetRandomInput()
+        end
+        if (Vector2Magnitude(prisoner.inputDirection) == 0) then
+            -- Make shivving logic (when close to another prisoner shiv)
+        end
     end
-    DrawText(Vector2ToString(prisoner.input), 0, 0, DrawMode.Sprite, "large", 4)
+    --DrawText(Vector2ToString(prisoner.inputDirection), 0, 0, DrawMode.Sprite, "large", 4)
 
 end
 function GetRandomInput()
@@ -131,10 +152,10 @@ function UpdatePrisoners(timeDelta)
         local currentPrisoner = activePrisoners[i]
         if (currentPrisoner ~= nil and currentPrisoner.remove ~= true) then
 
-            MovePrisoner(currentPrisoner, timeDelta)
+            GetPrisonerInput(currentPrisoner, timeDelta)
 
             -- Set direction and speed based on input
-            local fixedInput = Vector2SquareInputToCircle(currentPrisoner.input)
+            local fixedInput = Vector2SquareInputToCircle(currentPrisoner.inputDirection)
             currentPrisoner.currentDirection = Vector2Normalize(fixedInput)
             currentPrisoner.currentSpeed = currentPrisoner.maxSpeed * Vector2Magnitude(fixedInput)
 
@@ -143,27 +164,50 @@ function UpdatePrisoners(timeDelta)
             velocity.y = velocity.y * -1
             currentPrisoner.pos = Vector2Sum(currentPrisoner.pos, velocity)
             
-            -- Set animation state based on direction and speed
-            if (currentPrisoner.currentSpeed > 0) then
-                if (currentPrisoner.currentDirection.x > 0) then
-                    currentPrisoner.currentAnimState = prisonerAnimStates.walkRight
-                elseif (currentPrisoner.currentDirection.x < 0) then
-                    currentPrisoner.currentAnimState = prisonerAnimStates.walkLeft
-                else
-                    currentPrisoner.currentAnimState = prisonerAnimStates.walkStr
+            -- Set shivving
+            currentPrisoner.isShivvingLeft = false
+            currentPrisoner.isShivvingRight = false
+            if (currentPrisoner.currentSpeed == 0) then
+                if (currentPrisoner.inputA == true) then
+                    currentPrisoner.isShivvingLeft = true
+                elseif (currentPrisoner.inputB == true) then
+                    currentPrisoner.isShivvingRight = true
                 end
-            else
-                currentPrisoner.currentAnimState = prisonerAnimStates.idle
             end
 
+            -- Set animation state based on direction and speed
+            SetPrisonerAnimationState(currentPrisoner)
+
             -- Update animation frame
-            SetAnimationFrameIndex(currentPrisoner, timeDelta)
+            SetPrisonerAnimationFrameIndex(currentPrisoner, timeDelta)
         end
     end
     
 end
 
-function SetAnimationFrameIndex(prisoner, timeDelta)
+function SetPrisonerAnimationState(prisoner)
+
+    if (prisoner.currentSpeed > 0) then
+        if (prisoner.currentDirection.x > 0) then
+            prisoner.currentAnimState = prisonerAnimStates.walkRight
+        elseif (prisoner.currentDirection.x < 0) then
+            prisoner.currentAnimState = prisonerAnimStates.walkLeft
+        else
+            prisoner.currentAnimState = prisonerAnimStates.walkStr
+        end
+    else
+        if (prisoner.isShivvingLeft == true) then
+            prisoner.currentAnimState = prisonerAnimStates.shivLeft
+        elseif (prisoner.isShivvingRight == true) then
+            prisoner.currentAnimState = prisonerAnimStates.shivRight
+        else
+            prisoner.currentAnimState = prisonerAnimStates.idle
+        end
+    end
+
+end
+
+function SetPrisonerAnimationFrameIndex(prisoner, timeDelta)
 
     local secondsPerFrame = 1 / framesPerSecond
     prisoner.timePassedSinceLastFrame = prisoner.timePassedSinceLastFrame + (timeDelta / 1000)
