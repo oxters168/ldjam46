@@ -8,7 +8,7 @@ local prisoner = nil
   ScreenBufferChip and draw a text box.
 ]]--
 function Init()
-  SpawnPrisoner(16, 16)
+  SpawnPrisoner(128, 128)
 end
 
 --[[
