@@ -1,22 +1,6 @@
---[[
-  Pixel Vision 8 - New Template Script
-  Copyright (C) 2017, Pixel Vision 8 (@pixelvision8)
-  Created by Jesse Freeman (@jessefreeman)
+LoadScript("code-prisoners")
 
-  This project was designed to display some basic instructions when you create
-  a new game.  Simply delete the following code and implement your own Init(),
-  Update() and Draw() logic.
-
-  Learn more about making Pixel Vision 8 games at
-  https://www.pixelvision8.com/getting-started
-]]--
-
---[[
-  This this is an empty game, we will the following text. We combined two sets
-  of fonts into the default.font.png. Use uppercase for larger characters and
-  lowercase for a smaller one.
-]]--
-local message = "EMPTY GAME\n\n\nThis is an empty game template.\n\n\nVisit 'www.pixelvision8.com' to learn more about creating games from scratch."
+local prisoner = nil
 
 --[[
   The Init() method is part of the game's lifecycle and called a game starts.
@@ -24,25 +8,7 @@ local message = "EMPTY GAME\n\n\nThis is an empty game template.\n\n\nVisit 'www
   ScreenBufferChip and draw a text box.
 ]]--
 function Init()
-
-    -- Here we are manually changing the background color
-    BackgroundColor(0)
-
-    local display = Display()
-
-    -- We are going to render the message in a box as tiles. To do this, we
-    -- need to wrap the text, then split it into lines and draw each line.
-    local wrap = WordWrap(message, (display.x / 8) - 2)
-    local lines = SplitLines(wrap)
-    local total = #lines
-    local startY = ((display.y / 8) - 1) - total
-
-    -- We want to render the text from the bottom of the screen so we offset
-    -- it and loop backwards.
-    for i = total, 1, - 1 do
-        DrawText(lines[i], 1, startY + (i - 1), DrawMode.Tile, "large", 15)
-    end
-
+  SpawnPrisoner(16, 16)
 end
 
 --[[
@@ -51,9 +17,7 @@ end
   timeDelta, which is the difference in milliseconds since the last frame.
 ]]--
 function Update(timeDelta)
-
-    -- TODO add your own update logic here
-
+  UpdatePrisoners(timeDelta)
 end
 
 --[[
@@ -63,10 +27,10 @@ end
 ]]--
 function Draw()
 
-    -- We can use the RedrawDisplay() method to clear the screen and redraw
-    -- the tilemap in a single call.
-    RedrawDisplay()
+  -- We can use the RedrawDisplay() method to clear the screen and redraw
+  -- the tilemap in a single call.
+  RedrawDisplay()
 
-    -- TODO add your own draw logic here.
+  DrawPrisoners()
 
 end
