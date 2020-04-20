@@ -1,4 +1,5 @@
 LoadScript("code-prisoners")
+LoadScript("code-vector2-math")
 
 local prisoner = nil
 
@@ -9,7 +10,7 @@ local prisoner = nil
 ]]--
 function Init()
 
-  SpawnPrisonersRandomly(10, Display(true))
+  SpawnPrisonersRandomly(10, Vector2Difference(Display(true), NewPoint(32, 32)), NewPoint(16, 16))
   SpawnPrisoner(32, 32, true)
 
 end
@@ -22,7 +23,7 @@ end
 function Update(timeDelta)
 
   UpdatePrisoners(timeDelta)
-  
+
 end
 
 --[[
@@ -40,11 +41,11 @@ function Draw()
 
 end
 
-function SpawnPrisonersRandomly(count, size)
+function SpawnPrisonersRandomly(count, size, offset)
 
   for i = 1, count do
-    local randomX = math.random(size.x)
-    local randomY = math.random(size.y)
+    local randomX = math.random(size.x) + offset.x
+    local randomY = math.random(size.y) + offset.y
     SpawnPrisoner(randomX, randomY, false)
   end
 

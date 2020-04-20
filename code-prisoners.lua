@@ -247,6 +247,7 @@ function UpdatePrisoners(timeDelta)
                 local velocity = Vector2Multiply(currentPrisoner.currentDirection, currentPrisoner.currentSpeed)
                 velocity.y = velocity.y * -1
                 currentPrisoner.pos = Vector2Sum(currentPrisoner.pos, velocity)
+                currentPrisoner.pos = Vector2Clamp(currentPrisoner.pos, NewPoint(8, 8), Vector2Difference(Display(true), NewPoint(16, 16)))
                 
                 -- Set is shivving
                 currentPrisoner.isShivvingLeft = false

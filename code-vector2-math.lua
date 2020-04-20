@@ -59,6 +59,13 @@ function Vector2Magnitude(vector)
     
 end
 
+function Vector2Clamp(vector, minClampValues, maxClampValues)
+
+    local clamped = { x = math.min(math.max(vector.x, minClampValues.x), maxClampValues.x), y = math.min(math.max(vector.y, minClampValues.y), maxClampValues.y), }
+    return clamped
+
+end
+
 function Vector2Normalize(vector)
     
     local magnitude = Vector2Magnitude(vector)
