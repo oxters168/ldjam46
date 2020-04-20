@@ -12,4 +12,8 @@ prisonerShivLeft1={width=1,spriteIDs={18}}
 prisonerShivLeft2={width=1,spriteIDs={19}}
 prisonerShivRight1={width=1,spriteIDs={20}}
 prisonerShivRight2={width=1,spriteIDs={21}}
+prisonerDeath1={width=1,spriteIDs={32}}
+prisonerDeath2={width=1,spriteIDs={33}}
+prisonerDeath3={width=1,spriteIDs={34}}
+prisonerDeath4={width=1,spriteIDs={35}}
 -- spritelib-end

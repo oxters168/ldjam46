@@ -47,7 +47,7 @@ end
 
 function Vector2Divide(lhs, scalar)
 
-    local quotient = { x = lhs.x / scalar, lhs.y / scalar, }
+    local quotient = { x = lhs.x / scalar, y = lhs.y / scalar, }
     return quotient
 
 end
@@ -68,6 +68,13 @@ function Vector2Normalize(vector)
         normalized.y = vector.y / magnitude
     end
     return normalized
+
+end
+
+function Vector2Distance(lhs, rhs)
+
+    local difference = Vector2Difference(rhs, lhs)
+    return Vector2Magnitude(difference)
 
 end
 
