@@ -69,6 +69,11 @@ local prisonerAnimStates = {
         prisonerDeath4,
     }
 }
+local walkChancePercent = 0.6
+local attackChancePercent = 0.2
+local distancingTime = 0.3
+local distancingEffectRadius = 32
+distancingTool = false
 
 function SpawnPrisoner(x, y, takesInput)
     
@@ -96,6 +101,9 @@ function SpawnPrisoner(x, y, takesInput)
         doneDead = false,
         totalTimeDead = 0,
         attacking = false,
+        distancing = false,
+        distancingPoint = WorldAxis2DNone(),
+        timeDistanced = 0,
     }
     table.insert(activePrisoners, prisonerData)
 
@@ -145,7 +153,7 @@ function GetPrisonerInput(prisoner, timeDelta)
             prisoner.lastRandomInputSet = 0
 
             local attackChance = math.random()
-            if (attackChance <= 0.4) then
+            if (attackChance <= attackChancePercent) then
                 -- Set to attacking
                 prisoner.attacking = true
             else
@@ -183,8 +191,8 @@ end
 function GetRandomInput()
 
     local randomInput = WorldAxis2DNone()
-    local stopChance = math.random()
-    if (stopChance >= 0.5) then
+    local walkChance = math.random()
+    if (walkChance <= walkChancePercent) then
         randomInput.x = SetDecimalPlaces((math.random() * 2) - 1, 1)
         randomInput.y = SetDecimalPlaces((math.random() * 2) - 1, 1)
     end
@@ -208,6 +216,18 @@ function GetClosestPrisoner(relativeTo)
     return closestPrisoner
 
 end
+function GetPrisonersInCircle(center, radius)
+
+    local prisonersInCircle = {}
+    for i = 1, #activePrisoners do
+        local currentPrisoner = activePrisoners[i]
+        if (Vector2Distance(center, currentPrisoner.pos) <= radius) then
+            table.insert(prisonersInCircle, currentPrisoner)
+        end
+    end
+    return prisonersInCircle
+
+end
 
 function CheckDeathTime(prisoner, timeDelta)
 
@@ -223,9 +243,27 @@ function CheckDeathTime(prisoner, timeDelta)
 
 end
 
+function Disperse()
+
+    if (distancingTool and MouseButton(0)) then
+        
+        local mousePosition = MousePosition()
+        local affectedPrisoners = GetPrisonersInCircle(mousePosition, distancingEffectRadius)
+        for i = 1, #affectedPrisoners do
+            local currentPrisoner = affectedPrisoners[i]
+            currentPrisoner.distancing = true
+            currentPrisoner.distancingPoint = mousePosition
+            currentPrisoner.timeDistanced = 0
+        end
+    
+    end
+
+end
+
 function UpdatePrisoners(timeDelta)
 
-    --DrawText(Vector2Distance({ x = 0, y = 0, }, { x = 1, y = 2, }), 0, 0, DrawMode.Sprite, "large", 4)
+    Disperse()
+
     for i = 1, #activePrisoners do
         local currentPrisoner = activePrisoners[i]
 
@@ -239,16 +277,9 @@ function UpdatePrisoners(timeDelta)
 
                 -- Set direction and speed based on input
                 local fixedInput = Vector2SquareInputToCircle(currentPrisoner.inputDirection)
-                --local fixedInput = currentPrisoner.inputDirection
                 currentPrisoner.currentDirection = Vector2Normalize(fixedInput)
                 currentPrisoner.currentSpeed = currentPrisoner.maxSpeed * Vector2Magnitude(fixedInput)
 
-                -- Move self based on direction and speed
-                local velocity = Vector2Multiply(currentPrisoner.currentDirection, currentPrisoner.currentSpeed)
-                velocity.y = velocity.y * -1
-                currentPrisoner.pos = Vector2Sum(currentPrisoner.pos, velocity)
-                currentPrisoner.pos = Vector2Clamp(currentPrisoner.pos, NewPoint(8, 8), Vector2Difference(Display(true), NewPoint(16, 16)))
-                
                 -- Set is shivving
                 currentPrisoner.isShivvingLeft = false
                 currentPrisoner.isShivvingRight = false
@@ -259,25 +290,28 @@ function UpdatePrisoners(timeDelta)
                         currentPrisoner.isShivvingRight = true
                     end
                 end
-
-                -- Kill nearby prisoners if shivving
-                if (currentPrisoner.isShivvingLeft or currentPrisoner.isShivvingRight) then
-                    for j = 1, #activePrisoners do
-                        local otherPrisoner = activePrisoners[j]
-                        if (otherPrisoner ~= nil and otherPrisoner ~= currentPrisoner) then
-                            if (Vector2Distance(currentPrisoner.pos, otherPrisoner.pos) < currentPrisoner.size.x) then
-                                local direction = otherPrisoner.pos.x - currentPrisoner.pos.x
-                                if ((currentPrisoner.isShivvingLeft and direction < 0) or (currentPrisoner.isShivvingRight and direction > 0)) then
-                                    --DrawText("Kill!", 0, 0, DrawMode.Sprite, "large", 4)
-                                    if (otherPrisoner.dead ~= true) then
-                                        otherPrisoner.dead = true
-                                        otherPrisoner.currentAnimFrame = 1
-                                    end
-                                end
-                            end
-                        end
+                
+                -- Change velocity if distancing
+                if (currentPrisoner.distancing) then
+                    currentPrisoner.timeDistanced = currentPrisoner.timeDistanced + (timeDelta / 1000)
+                    if (currentPrisoner.timeDistanced < distancingTime) then
+                        local distancingDirection = Vector2Normalize(Vector2Difference(currentPrisoner.pos, currentPrisoner.distancingPoint))
+                        currentPrisoner.currentDirection = { x = distancingDirection.x, y = -distancingDirection.y }
+                        currentPrisoner.currentSpeed = currentPrisoner.maxSpeed
+                    else
+                        currentPrisoner.currentDirection = WorldAxis2DNone()
+                        currentPrisoner.currentSpeed = 0
+                        currentPrisoner.distancing = false
                     end
                 end
+
+                -- Move self based on direction and speed
+                local velocity = Vector2Multiply(currentPrisoner.currentDirection, currentPrisoner.currentSpeed)
+                velocity.y = velocity.y * -1
+                currentPrisoner.pos = Vector2Sum(currentPrisoner.pos, velocity)
+                currentPrisoner.pos = Vector2Clamp(currentPrisoner.pos, NewPoint(8, 8), Vector2Difference(Display(true), NewPoint(16, 16)))
+                
+                KillNearbyPrisoners(currentPrisoner)
             end
 
             -- Set animation state based on direction and speed
@@ -287,7 +321,29 @@ function UpdatePrisoners(timeDelta)
             SetPrisonerAnimationFrameIndex(currentPrisoner, timeDelta)
         end
     end
-    
+end
+
+function KillNearbyPrisoners(prisoner)
+
+    -- Kill nearby prisoners if shivving
+    if (prisoner.isShivvingLeft or prisoner.isShivvingRight) then
+        for j = 1, #activePrisoners do
+            local otherPrisoner = activePrisoners[j]
+            if (otherPrisoner ~= nil and otherPrisoner ~= prisoner) then
+                if (Vector2Distance(prisoner.pos, otherPrisoner.pos) < prisoner.size.x) then
+                    local direction = otherPrisoner.pos.x - prisoner.pos.x
+                    if ((prisoner.isShivvingLeft and direction < 0) or (prisoner.isShivvingRight and direction > 0)) then
+                        --DrawText("Kill!", 0, 0, DrawMode.Sprite, "large", 4)
+                        if (otherPrisoner.dead ~= true) then
+                            otherPrisoner.dead = true
+                            otherPrisoner.currentAnimFrame = 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+
 end
 
 -- Not actually necessary
@@ -295,6 +351,38 @@ function GetCenter(prisoner)
 
     local halfSize = Vector2Divide(prisoner.size, 2)
     return Vector2Sum(prisoner.pos, halfSize)
+
+end
+
+function CountDeadPrisoners()
+
+    local deadPrisonersCount = 0
+    for i=1, #activePrisoners do
+        if (activePrisoners[i].dead) then
+            deadPrisonersCount = deadPrisonersCount + 1
+        end
+    end
+    return deadPrisonersCount
+
+end
+
+function CountLivePrisoners()
+
+    local livePrisonersCount = 0
+    for i=1, #activePrisoners do
+        if (activePrisoners[i].dead ~= true) then
+            livePrisonersCount = livePrisonersCount + 1
+        end
+    end
+    return livePrisonersCount
+    
+end
+
+function RemoveAllPrisoners()
+
+    for i=1, #activePrisoners do
+        activePrisoners[i].remove = true
+    end
 
 end
 
@@ -342,6 +430,11 @@ function SetPrisonerAnimationFrameIndex(prisoner, timeDelta)
 end
 
 function DrawPrisoners()
+
+    if (distancingTool) then
+        local mousePos = MousePosition()
+        DrawSprite(52, mousePos.x, mousePos.y)
+    end
 
     local stillActivePrisoners = {}
     for i = 1, #activePrisoners do
