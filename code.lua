@@ -15,12 +15,20 @@ local controls = {
   saveEveryoneScreen = { "Click at a point to disperse", "prisoners Start: Quit" },
 }
 
+local modeSong = {
+  titleScreen = 3,
+  survive = 0,
+  saveEveryone = 1,
+  dead = 2,
+}
+
 --[[
   The Init() method is part of the game's lifecycle and called a game starts.
   We are going to use this method to configure background color,
   ScreenBufferChip and draw a text box.
 ]]--
 function Init()
+  SetGameMode(gameModes.title)
 end
 
 --[[
@@ -87,6 +95,9 @@ end
 
 function SetGameMode(gameMode)
 
+  local songIndex = modeSong.titleScreen
+  distancingTool = false
+
   if (gameMode == gameModes.title) then
 
     currentGameMode = gameModes.title
@@ -94,18 +105,23 @@ function SetGameMode(gameMode)
 
   elseif (gameMode == gameModes.survive) then
 
+    songIndex = modeSong.survive
+
     currentGameMode = gameModes.survive
-    distancingTool = false
     SpawnPrisonersRandomly(10, Vector2Difference(Display(true), NewPoint(32, 32)), NewPoint(16, 16))
     player = SpawnPrisoner(32, 32, true)    
 
   elseif (gameMode == gameModes.saveEveryone) then
+
+    songIndex = modeSong.saveEveryone
 
     currentGameMode = gameModes.saveEveryone
     distancingTool = true
     SpawnPrisonersRandomly(10, Vector2Difference(Display(true), NewPoint(32, 32)), NewPoint(16, 16))  
 
   end
+
+  PlaySong(songIndex, true)
   
 end
 
