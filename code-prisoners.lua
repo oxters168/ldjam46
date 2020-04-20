@@ -247,6 +247,8 @@ function Disperse()
 
     if (distancingTool and MouseButton(0)) then
         
+        PlaySound(5)
+
         local mousePosition = MousePosition()
         local affectedPrisoners = GetPrisonersInCircle(mousePosition, distancingEffectRadius)
         for i = 1, #affectedPrisoners do
@@ -335,6 +337,7 @@ function KillNearbyPrisoners(prisoner)
                     if ((prisoner.isShivvingLeft and direction < 0) or (prisoner.isShivvingRight and direction > 0)) then
                         --DrawText("Kill!", 0, 0, DrawMode.Sprite, "large", 4)
                         if (otherPrisoner.dead ~= true) then
+                            PlaySound(6)
                             otherPrisoner.dead = true
                             otherPrisoner.currentAnimFrame = 1
                         end

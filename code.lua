@@ -58,6 +58,42 @@ function Draw()
 
   DrawControls()
 
+  DrawLives()
+
+end
+
+function DrawControls()
+
+  local controlsText = controls.titleScreen
+  if (currentGameMode == gameModes.survive) then
+    controlsText = controls.surviveScreen
+  elseif (currentGameMode == gameModes.saveEveryone) then
+    controlsText = controls.saveEveryoneScreen
+  end
+
+  for i=1, #controlsText do
+    DrawText(controlsText[i], 0, (i - 1) * 8, DrawMode.Sprite, "large", 15)
+  end
+
+end
+
+function DrawLives()
+
+  if (currentGameMode == gameModes.saveEveryone) then
+    local displaySize = Display(true)
+    local deadIndex = 54
+    local aliveIndex = 53
+    
+    local deathCount = CountDeadPrisoners()
+    for i = 1, 3 do
+      local currentIndex = deadIndex
+      if (deathCount < i) then
+        currentIndex = aliveIndex
+      end
+      DrawSprite(currentIndex, displaySize.x - 8 * 3 + (8 * (i - 1)), displaySize.y - 8)
+    end
+  end
+
 end
 
 function ChangeGameModes()
@@ -131,21 +167,6 @@ function SpawnPrisonersRandomly(count, size, offset)
     local randomX = math.random(size.x) + offset.x
     local randomY = math.random(size.y) + offset.y
     SpawnPrisoner(randomX, randomY, false)
-  end
-
-end
-
-function DrawControls()
-
-  local controlsText = controls.titleScreen
-  if (currentGameMode == gameModes.survive) then
-    controlsText = controls.surviveScreen
-  elseif (currentGameMode == gameModes.saveEveryone) then
-    controlsText = controls.saveEveryoneScreen
-  end
-
-  for i=1, #controlsText do
-    DrawText(controlsText[i], 0, (i - 1) * 8, DrawMode.Sprite, "large", 15)
   end
 
 end
