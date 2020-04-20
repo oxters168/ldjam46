@@ -8,8 +8,10 @@ local prisoner = nil
   ScreenBufferChip and draw a text box.
 ]]--
 function Init()
-  SpawnPrisoner(128, 128)
+
+  SpawnPrisonersRandomly(10, Display(true))
   SpawnPrisoner(32, 32, true)
+
 end
 
 --[[
@@ -18,7 +20,9 @@ end
   timeDelta, which is the difference in milliseconds since the last frame.
 ]]--
 function Update(timeDelta)
+
   UpdatePrisoners(timeDelta)
+  
 end
 
 --[[
@@ -33,5 +37,15 @@ function Draw()
   RedrawDisplay()
 
   DrawPrisoners()
+
+end
+
+function SpawnPrisonersRandomly(count, size)
+
+  for i = 1, count do
+    local randomX = math.random(size.x)
+    local randomY = math.random(size.y)
+    SpawnPrisoner(randomX, randomY, false)
+  end
 
 end
